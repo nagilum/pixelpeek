@@ -1,0 +1,676 @@
+﻿using PixelPeek.Models;
+using PixelPeek.Models.Interfaces;
+
+namespace PixelPeek.Forms;
+
+public class ViewerForm : Form
+{
+    #region Fields and properties
+
+    /// <summary>
+    /// Selected file index.
+    /// </summary>
+    private int? _fileIndex;
+    
+    /// <summary>
+    /// Image files.
+    /// </summary>
+    private List<IFileEntry> _files = [];
+
+    /// <summary>
+    /// Program options.
+    /// </summary>
+    private readonly IOptions _options;
+
+    /// <summary>
+    /// The last recorded window state.
+    /// </summary>
+    private FormWindowState _lastWindowState;
+
+    /// <summary>
+    /// Zoom factor.
+    /// </summary>
+    private double? _zoomFactor;
+
+    /// <summary>
+    /// Zoom factor step.
+    /// </summary>
+    private double? _zoomFactorStep;
+    
+    #endregion
+    
+    #region Form controls
+
+    /// <summary>
+    /// Error label.
+    /// </summary>
+    private Label _errorLabel = null!;
+
+    /// <summary>
+    /// Image viewer box.
+    /// </summary>
+    private PictureBox _imageBox = null!;
+
+    /// <summary>
+    /// Wrapper, for centering.
+    /// </summary>
+    private PictureBox _wrapperBox = null!;
+    
+    #endregion
+    
+    #region Constructor functions
+    
+    /// <summary>
+    /// Create a new image viewer window.
+    /// </summary>
+    /// <param name="options">Program options.</param>
+    public ViewerForm(IOptions options)
+    {
+        _options = options;
+        
+        this.GetFiles();
+        this.SetupControls();
+        this.SetupForm();
+    }
+
+    /// <summary>
+    /// Scan the folder for files.
+    /// </summary>
+    private void GetFiles()
+    {
+        var extensions = new[]
+        {
+            "jpeg",
+            "jpg",
+            "png"
+        };
+
+        foreach (var extension in extensions)
+        {
+            try
+            {
+                var files = Directory.GetFiles(
+                    _options.Path!,
+                    $"*.{extension}",
+                    SearchOption.TopDirectoryOnly);
+
+                foreach (var file in files)
+                {
+                    _files.Add(new FileEntry(file));
+                }
+            }
+            catch
+            {
+                MessageBox.Show(
+                    $"Unable to get files .{extension} from {_options.Path!}",
+                    "Error",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+            }
+        }
+
+        _files = _options.SortOrder switch
+        {
+            FilesSortOrder.Alphabetical => _files.OrderBy(n => n.Filename).ToList(),
+            FilesSortOrder.Random => _files.OrderBy(_ => Random.Shared.Next()).ToList(),
+            _ => throw new Exception($"Invalid sort order {_options.SortOrder}")
+        };
+
+        if (_options.File is null)
+        {
+            if (_files.Count > 0)
+            {
+                _fileIndex = 0;
+            }
+            
+            return;
+        }
+
+        for (var i = 0; i < _files.Count; i++)
+        {
+            if (!_files[i].FullPath.Equals(_options.File, StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            _fileIndex = i;
+            break;
+        }
+
+        if (_fileIndex is null)
+        {
+            MessageBox.Show(
+                $"Unable to find {_options.File} among the found files.",
+                "Error",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Error);
+
+            _options.File = null;
+        }
+
+        if (_fileIndex is null &&
+            _files.Count > 0)
+        {
+            _fileIndex = 0;
+        }
+    }
+
+    /// <summary>
+    /// Setup and add controls with events.
+    /// </summary>
+    private void SetupControls()
+    {
+        _errorLabel = new Label
+        {
+            Dock = DockStyle.Fill,
+            TextAlign = ContentAlignment.MiddleCenter,
+            Visible = false
+        };
+        
+        _imageBox = new PictureBox
+        {
+            Visible = false
+        };
+
+        _wrapperBox = new PictureBox
+        {
+            Dock = DockStyle.Fill,
+            Visible = true
+        };
+
+        _wrapperBox.Controls.Add(_errorLabel);
+        _wrapperBox.Controls.Add(_imageBox);
+
+        this.Controls.Add(_wrapperBox);
+    }
+
+    /// <summary>
+    /// Setup form with events.
+    /// </summary>
+    private void SetupForm()
+    {
+        var path = _options.File ?? _options.Path;
+        var separator = path is not null ? " - " : string.Empty;
+
+        this.BackColor = Color.Black;
+        this.Location = new(100, 100);
+        this.Size = new(Screen.PrimaryScreen!.Bounds.Width - 200, Screen.PrimaryScreen.Bounds.Height - 200);
+        this.Text = $"{path}{separator}{Program.Name}";
+        this.WindowState = FormWindowState.Maximized;
+
+        _lastWindowState = this.WindowState;
+
+        this.KeyDown += this.FormKeyDown;
+        this.Resize += this.FormResize;
+        this.ResizeEnd += this.FormResizeEnd;
+        this.Shown += this.FormShown;
+    }
+    
+    #endregion
+    
+    #region Control event functions
+
+    /// <summary>
+    /// Handles the KeyDown event for all controls on the window.
+    /// </summary>
+    private void FormKeyDown(object? _, KeyEventArgs e)
+    {
+        switch (e.KeyCode)
+        {
+            // Close window.
+            case Keys.Escape:
+                this.Close();
+                break;
+            
+            // Go to the next image in the folder.
+            case Keys.Down or Keys.Right:
+                this.GoToNextImage();
+                break;
+            
+            // Go to the previous image in the folder.
+            case Keys.Up or Keys.Left:
+                this.GoToPreviousImage();
+                break;
+            
+            // Decrease zoom factor on image.
+            case Keys.Subtract:
+                this.ZoomOut(e.Control);
+                break;
+            
+            // Increase zoom factor on image.
+            case Keys.Add:
+                this.ZoomIn(e.Control);
+                break;
+            
+            // Go to the first image in the folder.
+            case Keys.Home:
+                this.GoToFirstImage();
+                break;
+            
+            // Go to the last image in the folder.
+            case Keys.End:
+                this.GoToLastImage();
+                break;
+        }
+    }
+
+    /// <summary>
+    /// Reposition all controls.
+    /// </summary>
+    private void FormResize(object? _, EventArgs e)
+    {
+        if (this.WindowState == _lastWindowState)
+        {
+            return;
+        }
+
+        _lastWindowState = this.WindowState;
+
+        if (this.WindowState is FormWindowState.Minimized)
+        {
+            return;
+        }
+
+        this.FormResizeEnd(null, null!);
+    }
+
+    /// <summary>
+    /// Reposition all controls.
+    /// </summary>
+    private void FormResizeEnd(object? _, EventArgs e)
+    {
+        if (_fileIndex is null ||
+            _zoomFactor is null ||
+            _files[_fileIndex.Value].Bitmap is null)
+        {
+            return;
+        }
+        
+        var entry = _files[_fileIndex.Value];
+        
+        var height = (int)(entry.Bitmap!.Height / _zoomFactor.Value);
+        var width = (int)(entry.Bitmap!.Width / _zoomFactor.Value);
+
+        if (height < 0 || height > entry.Bitmap!.Height ||
+            width < 0 || width > entry.Bitmap!.Width)
+        {
+            height = entry.Bitmap!.Height;
+            width = entry.Bitmap!.Width;
+        }
+
+        _imageBox.Visible = false;
+        _imageBox.Location = new((_wrapperBox.ClientSize.Width - width) / 2, (_wrapperBox.ClientSize.Height - height) / 2);
+        _imageBox.Size = new(width, height);
+        _imageBox.Visible = true;
+    }
+    
+    /// <summary>
+    /// Show the selected file.
+    /// </summary>
+    private void FormShown(object? _, EventArgs e)
+    {
+        this.ShowFile();
+    }
+    
+    #endregion
+    
+    #region Event helper functions
+
+    /// <summary>
+    /// Go to the first image in the folder.
+    /// </summary>
+    private void GoToFirstImage()
+    {
+        if (_files.Count is 0)
+        {
+            return;
+        }
+
+        _fileIndex = 0;
+        
+        this.ShowFile();
+    }
+
+    /// <summary>
+    /// Go to the last image in the folder.
+    /// </summary>
+    private void GoToLastImage()
+    {
+        if (_files.Count is 0)
+        {
+            return;
+        }
+
+        _fileIndex = _files.Count - 1;
+        
+        this.ShowFile();
+    }
+    
+    /// <summary>
+    /// Go to the next image in the folder.
+    /// </summary>
+    private void GoToNextImage()
+    {
+        if (_files.Count is 0)
+        {
+            return;
+        }
+
+        _fileIndex ??= 0;
+        _fileIndex++;
+
+        if (_fileIndex == _files.Count)
+        {
+            _fileIndex = 0;
+        }
+        
+        this.ShowFile();
+    }
+
+    /// <summary>
+    /// Go to the previous image in the folder.
+    /// </summary>
+    private void GoToPreviousImage()
+    {
+        if (_files.Count is 0)
+        {
+            return;
+        }
+
+        _fileIndex ??= 0;
+        _fileIndex--;
+
+        if (_fileIndex == -1)
+        {
+            _fileIndex = _files.Count - 1;
+        }
+
+        this.ShowFile();
+    }
+    
+    /// <summary>
+    /// Increase zoom factor on image.
+    /// </summary>
+    /// <param name="max">Zoom to max size.</param>
+    private void ZoomIn(bool? max)
+    {
+        if (_fileIndex is null ||
+            _files[_fileIndex.Value].Bitmap is null)
+        {
+            return;
+        }
+        
+        var entry = _files[_fileIndex.Value];
+        
+        if (max is true)
+        {
+            _zoomFactor = 1;
+        }
+        else if (_zoomFactor is not null &&
+                 _zoomFactorStep is not null)
+        {
+            _zoomFactor -= _zoomFactorStep;
+
+            if (_zoomFactor < 1)
+            {
+                _zoomFactor = 1;
+            }
+        }
+
+        if (_zoomFactor is null)
+        {
+            return;
+        }
+        
+        var height = (int)(entry.Bitmap!.Height / _zoomFactor.Value);
+        var width = (int)(entry.Bitmap!.Width / _zoomFactor.Value);
+        var percentage = 100D / _zoomFactor;
+
+        if (height < 0 || height > entry.Bitmap!.Height ||
+            width < 0 || width > entry.Bitmap!.Width)
+        {
+            height = entry.Bitmap!.Height;
+            width = entry.Bitmap!.Width;
+            percentage = 100;
+        }
+
+        _imageBox.Visible = false;
+        _imageBox.Location = new((_wrapperBox.ClientSize.Width - width) / 2, (_wrapperBox.ClientSize.Height - height) / 2);
+        _imageBox.Size = new(width, height);
+        _imageBox.Visible = true;
+        
+        var parts = new List<string>
+        {
+            entry.Filename,
+            $"{percentage:N2}%"
+        };
+
+        if (height != entry.Bitmap!.Height ||
+            width != entry.Bitmap!.Width)
+        {
+            parts.Add($"{entry.Bitmap!.Width}x{entry.Bitmap!.Height} ({width}x{height})");
+        }
+        else
+        {
+            parts.Add($"{entry.Bitmap!.Width}x{entry.Bitmap!.Height}");
+        }
+
+        parts.Add(Program.Name);
+
+        this.Text = string.Join(" - ", parts);
+    }
+
+    /// <summary>
+    /// Decrease zoom factor on image.
+    /// </summary>
+    /// <param name="fitToScreen">Whether to fix image to screen or decrease the zoom factor.</param>
+    private void ZoomOut(bool? fitToScreen)
+    {
+        if (_fileIndex is null ||
+            _files[_fileIndex.Value].Bitmap is null)
+        {
+            return;
+        }
+        
+        var entry = _files[_fileIndex.Value];
+        
+        var zoomFactorHeight = (double)entry.Bitmap!.Height / _wrapperBox.ClientSize.Height;
+        var zoomFactorWidth = (double)entry.Bitmap!.Width / _wrapperBox.ClientSize.Width;
+
+        var defaultZoomFactor = zoomFactorHeight > zoomFactorWidth
+            ? zoomFactorHeight
+            : zoomFactorWidth;
+
+        if (fitToScreen is true)
+        {
+            _zoomFactor = defaultZoomFactor;
+        }
+        else if (_zoomFactor is not null &&
+                 _zoomFactorStep is not null)
+        {
+            _zoomFactor += _zoomFactorStep;
+
+            if (_zoomFactor > defaultZoomFactor)
+            {
+                _zoomFactor = defaultZoomFactor;
+            }
+        }
+        
+        if (_zoomFactor is null)
+        {
+            return;
+        }
+        
+        var height = (int)(entry.Bitmap!.Height / _zoomFactor.Value);
+        var width = (int)(entry.Bitmap!.Width / _zoomFactor.Value);
+        var percentage = 100D / _zoomFactor;
+
+        if (height < 0 || height > entry.Bitmap!.Height ||
+            width < 0 || width > entry.Bitmap!.Width)
+        {
+            height = entry.Bitmap!.Height;
+            width = entry.Bitmap!.Width;
+            percentage = 100;
+        }
+
+        _imageBox.Visible = false;
+        _imageBox.Location = new((_wrapperBox.ClientSize.Width - width) / 2, (_wrapperBox.ClientSize.Height - height) / 2);
+        _imageBox.Size = new(width, height);
+        _imageBox.Visible = true;
+        
+        var parts = new List<string>
+        {
+            entry.Filename,
+            $"{percentage:N2}%"
+        };
+
+        if (height != entry.Bitmap!.Height ||
+            width != entry.Bitmap!.Width)
+        {
+            parts.Add($"{entry.Bitmap!.Width}x{entry.Bitmap!.Height} ({width}x{height})");
+        }
+        else
+        {
+            parts.Add($"{entry.Bitmap!.Width}x{entry.Bitmap!.Height}");
+        }
+
+        parts.Add(Program.Name);
+
+        this.Text = string.Join(" - ", parts);
+    }
+    
+    #endregion
+    
+    #region Image handling functions
+
+    /// <summary>
+    /// Show the selected file.
+    /// </summary>
+    private void ShowFile()
+    {
+        if (_fileIndex is null)
+        {
+            return;
+        }
+
+        _zoomFactor = null;
+        _zoomFactorStep = null;
+
+        var entry = _files[_fileIndex.Value];
+
+        if (entry.Bitmap is null)
+        {
+            try
+            {
+                entry.Bitmap = new Bitmap(entry.FullPath);
+            }
+            catch (Exception ex)
+            {
+                entry.Error = ex.Message;
+            }
+        }
+
+        if (entry.Bitmap is null)
+        {
+            _imageBox.Visible = false;
+
+            _errorLabel.Text = $"Error loading {entry.Filename}{Environment.NewLine}{entry.Error}";
+            _errorLabel.Visible = true;
+
+            this.Text = $"{entry.Filename} - {Program.Name}";
+            return;
+        }
+
+        // Calculate new background color.
+        const int thumbSize = 50;
+
+        var bitmap = (Bitmap)entry.Bitmap!.GetThumbnailImage(
+            thumbSize, 
+            thumbSize, 
+            null, 
+            IntPtr.Zero);
+        
+        var colors = new Dictionary<Color, int>();
+
+        for (var x = 0; x < thumbSize; x++)
+        {
+            for (var y = 0; y < thumbSize; y++)
+            {
+                var color = bitmap.GetPixel(x, y);
+
+                if (!colors.TryAdd(color, 1))
+                {
+                    colors[color]++;
+                }
+            }
+        }
+
+        var (mostUsedColor, _) = colors
+            .OrderByDescending(n => n.Value)
+            .FirstOrDefault();
+
+        this.BackColor = Color.FromArgb(
+            mostUsedColor.R,
+            mostUsedColor.G,
+            mostUsedColor.B);
+
+        // Calculate display height/width.
+        var height = entry.Bitmap!.Height;
+        var width = entry.Bitmap!.Width;
+
+        if (height > _wrapperBox.ClientSize.Height ||
+            width > _wrapperBox.ClientSize.Width)
+        {
+            var zoomFactorHeight = (double)height / _wrapperBox.ClientSize.Height;
+            var zoomFactorWidth = (double)width / _wrapperBox.ClientSize.Width;
+
+            _zoomFactor = zoomFactorHeight > zoomFactorWidth
+                ? zoomFactorHeight
+                : zoomFactorWidth;
+
+            _zoomFactorStep = _zoomFactor / 10;
+
+            height = (int)(height / _zoomFactor.Value);
+            width = (int)(width / _zoomFactor.Value);
+        }
+        else
+        {
+            _zoomFactor = 1;
+        }
+
+        var percentage = 100D / _zoomFactor;
+
+        // Set image and position correctly.
+        _imageBox.Visible = false;
+        _imageBox.Image = entry.Bitmap!;
+        _imageBox.Location = new(
+            (_wrapperBox.ClientSize.Width - width) / 2,
+            (_wrapperBox.ClientSize.Height - height) / 2);
+        _imageBox.Size = new(width, height);
+        _imageBox.SizeMode = PictureBoxSizeMode.Zoom;
+        _imageBox.Visible = true;
+
+        // Update window title.
+        var parts = new List<string>
+        {
+            entry.Filename,
+            $"{percentage:N2}%"
+        };
+
+        if (height != entry.Bitmap!.Height ||
+            width != entry.Bitmap!.Width)
+        {
+            parts.Add($"{entry.Bitmap!.Width}x{entry.Bitmap!.Height} ({width}x{height})");
+        }
+        else
+        {
+            parts.Add($"{entry.Bitmap!.Width}x{entry.Bitmap!.Height}");
+        }
+
+        parts.Add(Program.Name);
+
+        this.Text = string.Join(" - ", parts);
+    }
+
+    #endregion
+}

@@ -1,0 +1,7 @@
+.idea/
+
+PixelPeek/bin/
+PixelPeek/obj/
+
+*.user
+*.log
