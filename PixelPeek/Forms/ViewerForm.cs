@@ -28,6 +28,21 @@ public class ViewerForm : Form
     private FormWindowState _lastWindowState;
 
     /// <summary>
+    /// Whether the image box is currently being moved.
+    /// </summary>
+    private bool _imageIsMoving;
+
+    /// <summary>
+    /// Original cursor position.
+    /// </summary>
+    private Point? _imageCursorPosition;
+
+    /// <summary>
+    /// Original image position.
+    /// </summary>
+    private Point? _imageOriginalPosition;
+
+    /// <summary>
     /// Zoom factor.
     /// </summary>
     private double? _zoomFactor;
@@ -172,6 +187,10 @@ public class ViewerForm : Form
             Visible = false
         };
 
+        _imageBox.MouseDown += this.ImageBoxMouseDown;
+        _imageBox.MouseMove += this.ImageBoxMouseMove;
+        _imageBox.MouseUp += this.ImageBoxMouseUp;
+
         _wrapperBox = new PictureBox
         {
             Dock = DockStyle.Fill,
@@ -208,7 +227,7 @@ public class ViewerForm : Form
     
     #endregion
     
-    #region Control event functions
+    #region From event functions
 
     /// <summary>
     /// Handles the KeyDown event for all controls on the window.
@@ -310,6 +329,51 @@ public class ViewerForm : Form
     private void FormShown(object? _, EventArgs e)
     {
         this.ShowFile();
+    }
+    
+    #endregion
+    
+    #region Control event functions
+
+    /// <summary>
+    /// Readies the image box for movement.
+    /// </summary>
+    private void ImageBoxMouseDown(object? _, MouseEventArgs e)
+    {
+        _imageCursorPosition = Cursor.Position;
+        _imageOriginalPosition = _imageBox.Location;
+        _imageIsMoving = true;
+    }
+
+    /// <summary>
+    /// Move the image box.
+    /// </summary>
+    private void ImageBoxMouseMove(object? _, MouseEventArgs e)
+    {
+        if (!_imageIsMoving ||
+            _imageCursorPosition is null ||
+            _imageOriginalPosition is null)
+        {
+            return;
+        }
+
+        var diffX = Cursor.Position.X - _imageCursorPosition.Value.X;
+        var diffY = Cursor.Position.Y - _imageCursorPosition.Value.Y;
+
+        var newX = _imageOriginalPosition.Value.X + diffX;
+        var newY = _imageOriginalPosition.Value.Y + diffY;
+
+        _imageBox.Location = new(newX, newY);
+    }
+
+    /// <summary>
+    /// Finish moving the image box.
+    /// </summary>
+    private void ImageBoxMouseUp(object? _, MouseEventArgs e)
+    {
+        _imageCursorPosition = null;
+        _imageOriginalPosition = null;
+        _imageIsMoving = false;
     }
     
     #endregion
