@@ -499,7 +499,7 @@ public class ViewerForm : Form
         
         var height = (int)(entry.Bitmap!.Height / _zoomFactor.Value);
         var width = (int)(entry.Bitmap!.Width / _zoomFactor.Value);
-        var percentage = 100D / _zoomFactor;
+        var percentage = (int)(100D / _zoomFactor);
 
         if (height < 0 || height > entry.Bitmap!.Height ||
             width < 0 || width > entry.Bitmap!.Width)
@@ -517,7 +517,7 @@ public class ViewerForm : Form
         var parts = new List<string>
         {
             entry.Filename,
-            $"{percentage:N2}%"
+            $"{percentage}%"
         };
 
         if (height != entry.Bitmap!.Height ||
@@ -668,7 +668,7 @@ public class ViewerForm : Form
         }
 
         // Calculate new background color.
-        const int thumbSize = 50;
+        const int thumbSize = 100;
 
         var bitmap = (Bitmap)entry.Bitmap!.GetThumbnailImage(
             thumbSize, 
@@ -724,7 +724,7 @@ public class ViewerForm : Form
             _zoomFactor = 1;
         }
 
-        var percentage = 100D / _zoomFactor;
+        var percentage = (int)(100D / _zoomFactor);
 
         // Set image and position correctly.
         _imageBox.Visible = false;
@@ -740,7 +740,7 @@ public class ViewerForm : Form
         var parts = new List<string>
         {
             entry.Filename,
-            $"{percentage:N2}%"
+            $"{percentage}%"
         };
 
         if (height != entry.Bitmap!.Height ||
