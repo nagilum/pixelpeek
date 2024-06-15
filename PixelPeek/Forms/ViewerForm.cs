@@ -11,6 +11,11 @@ public class ViewerForm : Form
     /// Selected file index.
     /// </summary>
     private int? _fileIndex;
+
+    /// <summary>
+    /// Index of file to clear bitmap data for.
+    /// </summary>
+    private int? _fileIndexToClear;
     
     /// <summary>
     /// Image files.
@@ -390,6 +395,7 @@ public class ViewerForm : Form
             return;
         }
 
+        _fileIndexToClear = _fileIndex;
         _fileIndex = 0;
         
         this.ShowFile();
@@ -405,6 +411,7 @@ public class ViewerForm : Form
             return;
         }
 
+        _fileIndexToClear = _fileIndex;
         _fileIndex = _files.Count - 1;
         
         this.ShowFile();
@@ -419,6 +426,8 @@ public class ViewerForm : Form
         {
             return;
         }
+        
+        _fileIndexToClear = _fileIndex;
 
         _fileIndex ??= 0;
         _fileIndex++;
@@ -440,6 +449,8 @@ public class ViewerForm : Form
         {
             return;
         }
+        
+        _fileIndexToClear = _fileIndex;
 
         _fileIndex ??= 0;
         _fileIndex--;
@@ -642,6 +653,17 @@ public class ViewerForm : Form
             _errorLabel.Visible = true;
 
             this.Text = $"{entry.Filename} - {Program.Name}";
+
+            if (_fileIndexToClear is null ||
+                _files[_fileIndexToClear.Value].Bitmap is null)
+            {
+                return;
+            }
+
+            _files[_fileIndexToClear.Value].Bitmap!.Dispose();
+            _files[_fileIndexToClear.Value].Bitmap = null;
+            _fileIndexToClear = null;
+
             return;
         }
 
@@ -734,6 +756,17 @@ public class ViewerForm : Form
         parts.Add(Program.Name);
 
         this.Text = string.Join(" - ", parts);
+        
+        // Clear previous image.
+        if (_fileIndexToClear is null ||
+            _files[_fileIndexToClear.Value].Bitmap is null)
+        {
+            return;
+        }
+
+        _files[_fileIndexToClear.Value].Bitmap!.Dispose();
+        _files[_fileIndexToClear.Value].Bitmap = null;
+        _fileIndexToClear = null;
     }
 
     #endregion
