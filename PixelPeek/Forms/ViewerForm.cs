@@ -1,11 +1,17 @@
 ﻿using PixelPeek.Models;
 using PixelPeek.Models.Interfaces;
+using PixelPeek.Services;
 
 namespace PixelPeek.Forms;
 
 public class ViewerForm : Form
 {
     #region Fields and properties
+
+    /// <summary>
+    /// Configuration service.
+    /// </summary>
+    private readonly IConfig _config = new Config();
 
     /// <summary>
     /// Selected file index.
@@ -216,7 +222,7 @@ public class ViewerForm : Form
         var path = _options.File ?? _options.Path;
         var separator = path is not null ? " - " : string.Empty;
 
-        this.BackColor = Color.Black;
+        this.BackColor = _config.Get<Color?>("DefaultBackgroundColor") ?? Color.Black;
         this.Location = new(100, 100);
         this.Size = new(Screen.PrimaryScreen!.Bounds.Width - 200, Screen.PrimaryScreen.Bounds.Height - 200);
         this.Text = $"{path}{separator}{Program.Name}";
@@ -668,37 +674,40 @@ public class ViewerForm : Form
         }
 
         // Calculate new background color.
-        const int thumbSize = 100;
-
-        var bitmap = (Bitmap)entry.Bitmap!.GetThumbnailImage(
-            thumbSize, 
-            thumbSize, 
-            null, 
-            IntPtr.Zero);
-        
-        var colors = new Dictionary<Color, int>();
-
-        for (var x = 0; x < thumbSize; x++)
+        if (_config.Get<bool?>("AdaptiveBackgroundColor") is true)
         {
-            for (var y = 0; y < thumbSize; y++)
-            {
-                var color = bitmap.GetPixel(x, y);
+            const int thumbSize = 100;
 
-                if (!colors.TryAdd(color, 1))
+            var bitmap = (Bitmap)entry.Bitmap!.GetThumbnailImage(
+                thumbSize, 
+                thumbSize, 
+                null, 
+                IntPtr.Zero);
+        
+            var colors = new Dictionary<Color, int>();
+
+            for (var x = 0; x < thumbSize; x++)
+            {
+                for (var y = 0; y < thumbSize; y++)
                 {
-                    colors[color]++;
+                    var color = bitmap.GetPixel(x, y);
+
+                    if (!colors.TryAdd(color, 1))
+                    {
+                        colors[color]++;
+                    }
                 }
             }
+
+            var (mostUsedColor, _) = colors
+                .OrderByDescending(n => n.Value)
+                .FirstOrDefault();
+
+            this.BackColor = Color.FromArgb(
+                mostUsedColor.R,
+                mostUsedColor.G,
+                mostUsedColor.B);
         }
-
-        var (mostUsedColor, _) = colors
-            .OrderByDescending(n => n.Value)
-            .FirstOrDefault();
-
-        this.BackColor = Color.FromArgb(
-            mostUsedColor.R,
-            mostUsedColor.G,
-            mostUsedColor.B);
 
         // Calculate display height/width.
         var height = entry.Bitmap!.Height;
