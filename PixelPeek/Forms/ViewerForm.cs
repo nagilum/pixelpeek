@@ -11,7 +11,7 @@ public class ViewerForm : Form
     /// <summary>
     /// Configuration service.
     /// </summary>
-    private readonly IConfig _config = new Config();
+    private readonly Config _config = new();
 
     /// <summary>
     /// Selected file index.
