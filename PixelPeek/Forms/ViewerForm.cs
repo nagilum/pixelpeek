@@ -275,6 +275,11 @@ public class ViewerForm : Form
             case Keys.End:
                 this.GoToLastImage();
                 break;
+            
+            // Toggle fullscreen.
+            case Keys.F11:
+                this.ToggleFullscreen();
+                break;
         }
     }
 
@@ -461,6 +466,86 @@ public class ViewerForm : Form
         }
 
         this.ShowFile();
+    }
+
+    /// <summary>
+    /// Toggle fullscreen.
+    /// </summary>
+    private void ToggleFullscreen()
+    {
+        if (this.FormBorderStyle is FormBorderStyle.None)
+        {
+            this.FormBorderStyle = FormBorderStyle.Sizable;
+            this.WindowState = FormWindowState.Maximized;
+        }
+        else
+        {
+            this.WindowState = FormWindowState.Normal;
+            this.FormBorderStyle = FormBorderStyle.None;
+            this.Bounds = Screen.PrimaryScreen!.Bounds;
+            this.WindowState = FormWindowState.Maximized;
+        }
+        
+        if (_fileIndex is null ||
+            _files[_fileIndex.Value].Bitmap is null)
+        {
+            return;
+        }
+        
+        var entry = _files[_fileIndex.Value];
+        
+        // Calculate display height/width.
+        var height = entry.Bitmap!.Height;
+        var width = entry.Bitmap!.Width;
+
+        if (height > _wrapperBox.ClientSize.Height ||
+            width > _wrapperBox.ClientSize.Width)
+        {
+            var zoomFactorHeight = (double)height / _wrapperBox.ClientSize.Height;
+            var zoomFactorWidth = (double)width / _wrapperBox.ClientSize.Width;
+
+            _zoomFactor = zoomFactorHeight > zoomFactorWidth
+                ? zoomFactorHeight
+                : zoomFactorWidth;
+
+            _zoomFactorStep = _zoomFactor / 10;
+
+            height = (int)(height / _zoomFactor.Value);
+            width = (int)(width / _zoomFactor.Value);
+        }
+        else
+        {
+            _zoomFactor = 1;
+        }
+        
+        var percentage = (int)(100D / _zoomFactor);
+
+        // Set image and position correctly.
+        _imageBox.Visible = false;
+        _imageBox.Location = new((_wrapperBox.ClientSize.Width - width) / 2, (_wrapperBox.ClientSize.Height - height) / 2);
+        _imageBox.Size = new(width, height);
+        _imageBox.Visible = true;
+        
+        // Update window title.
+        var parts = new List<string>
+        {
+            entry.Filename,
+            $"{percentage}%"
+        };
+
+        if (height != entry.Bitmap!.Height ||
+            width != entry.Bitmap!.Width)
+        {
+            parts.Add($"{entry.Bitmap!.Width}x{entry.Bitmap!.Height} ({width}x{height})");
+        }
+        else
+        {
+            parts.Add($"{entry.Bitmap!.Width}x{entry.Bitmap!.Height}");
+        }
+
+        parts.Add(Program.Name);
+
+        this.Text = string.Join(" - ", parts);
     }
     
     /// <summary>
