@@ -1,5 +1,6 @@
 ﻿using PixelPeek.Models;
 using PixelPeek.Models.Interfaces;
+using Timer = System.Windows.Forms.Timer;
 
 namespace PixelPeek.Forms;
 
@@ -75,6 +76,11 @@ public class ViewerForm : Form
     /// Wrapper, for centering.
     /// </summary>
     private PictureBox _wrapperBox = null!;
+
+    /// <summary>
+    /// Timer, for slideshow.
+    /// </summary>
+    private Timer _timer = null!;
     
     #endregion
     
@@ -205,6 +211,17 @@ public class ViewerForm : Form
         _wrapperBox.Controls.Add(_errorLabel);
         _wrapperBox.Controls.Add(_imageBox);
 
+        _timer = new Timer
+        {
+            Enabled = false,
+            Interval = (int)TimeSpan.FromSeconds(5).TotalMilliseconds
+        };
+
+        _timer.Tick += (_, _) =>
+        {
+            this.GoToNextImage();
+        };
+
         this.Controls.Add(_wrapperBox);
     }
 
@@ -243,7 +260,16 @@ public class ViewerForm : Form
         {
             // Close window.
             case Keys.Escape:
-                this.Close();
+                if (_timer.Enabled)
+                {
+                    _timer.Stop();
+                    _timer.Enabled = false;
+                }
+                else
+                {
+                    this.Close();    
+                }
+                
                 break;
             
             // Go to the next image in the folder.
@@ -279,6 +305,11 @@ public class ViewerForm : Form
             // Toggle fullscreen.
             case Keys.F11:
                 this.ToggleFullscreen();
+                break;
+            
+            // Toggle slideshow.
+            case Keys.F5:
+                this.ToggleSlideshow();
                 break;
         }
     }
@@ -546,6 +577,23 @@ public class ViewerForm : Form
         parts.Add(Program.Name);
 
         this.Text = string.Join(" - ", parts);
+    }
+
+    /// <summary>
+    /// Toggle slideshow.
+    /// </summary>
+    private void ToggleSlideshow()
+    {
+        if (_timer.Enabled)
+        {
+            _timer.Stop();
+            _timer.Enabled = false;
+        }
+        else
+        {
+            _timer.Enabled = true;
+            _timer.Start();
+        }
     }
     
     /// <summary>
