@@ -13,6 +13,16 @@ public interface IOptions
     string? Path { get; set; }
     
     /// <summary>
+    /// Whether to go into fullscreen when the app starts.
+    /// </summary>
+    bool SetFullscreen { get; set; }
+    
+    /// <summary>
+    /// Whether to start the slideshow when the app starts.
+    /// </summary>
+    bool StartSlideshow { get; set; }
+    
+    /// <summary>
     /// Files sort order.
     /// </summary>
     FilesSortOrder SortOrder { get; set; }

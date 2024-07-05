@@ -41,21 +41,36 @@ public class AboutDialog : Form
         {
             AutoSize = true,
             Location = new(13, 90),
-            Text = $"Usage: {Program.Name} <path>"
+            Text = $"Usage: {Program.Name} <path> [<options>]"
         };
 
-        var pathExplanationLabel = new Label
+        var optionsTriggersLabel = new Label
         {
             AutoSize = true,
-            Location = new(13, 110),
-            Text = "Path can be either a folder or file of an image type."
+            Location = new(13, 120),
+            Text =
+                $"Options:{Environment.NewLine}" +
+                $"    -f | --fullscreen{Environment.NewLine}" +
+                $"    -r | --random{Environment.NewLine}" +
+                $"    -s | --slideshow"
+        };
+
+        var optionsDescriptionsLabel = new Label
+        {
+            AutoSize = true,
+            Location = new(170, 120),
+            Text =
+                $"{Environment.NewLine}" +
+                $"Start the app in full screen mode.{Environment.NewLine}" +
+                $"Randomize order of files.{Environment.NewLine}" +
+                $"Start slideshow when app starts."
         };
         
         // Copyright and documentation.
         var copyrightLabel = new Label
         {
             AutoSize = true,
-            Location = new(13, 165),
+            Location = new(13, 205),
             Text = "Copyright \u00a9 2024 Stian Hanger"
         };
         
@@ -63,7 +78,7 @@ public class AboutDialog : Form
         {
             AutoSize = true,
             LinkArea = new(38, 36),
-            Location = new(14, 185),
+            Location = new(14, 220),
             Text = $"Source and documentation available at {Program.GitHubRepo}"
         };
 
@@ -87,7 +102,8 @@ public class AboutDialog : Form
         this.Controls.Add(productVersionLabel);
         
         this.Controls.Add(usageLabel);
-        this.Controls.Add(pathExplanationLabel);
+        this.Controls.Add(optionsTriggersLabel);
+        this.Controls.Add(optionsDescriptionsLabel);
 
         this.Controls.Add(copyrightLabel);
         this.Controls.Add(documentationLabel);

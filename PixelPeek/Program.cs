@@ -60,9 +60,19 @@ internal static class Program
         {
             switch (argv)
             {
+                case "-f":
+                case "--fullscreen":
+                    options.SetFullscreen = true;
+                    break;
+                
                 case "-r":
                 case "--random":
                     options.SortOrder = FilesSortOrder.Random;
+                    break;
+                
+                case "-s":
+                case "--slideshow":
+                    options.StartSlideshow = true;
                     break;
                 
                 default:

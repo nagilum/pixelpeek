@@ -15,6 +15,16 @@ public class Options : IOptions
     public string? Path { get; set; }
 
     /// <summary>
+    /// <inheritdoc cref="IOptions.SetFullscreen"/>
+    /// </summary>
+    public bool SetFullscreen { get; set; }
+    
+    /// <summary>
+    /// <inheritdoc cref="IOptions.StartSlideshow"/>
+    /// </summary>
+    public bool StartSlideshow { get; set; }
+
+    /// <summary>
     /// <inheritdoc cref="IOptions.SortOrder"/>
     /// </summary>
     public FilesSortOrder SortOrder { get; set; } = FilesSortOrder.Alphabetical;

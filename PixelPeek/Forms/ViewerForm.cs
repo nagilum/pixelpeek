@@ -97,6 +97,16 @@ public class ViewerForm : Form
         this.GetFiles();
         this.SetupControls();
         this.SetupForm();
+
+        if (options.SetFullscreen)
+        {
+            this.ToggleFullscreen();
+        }
+
+        if (options.StartSlideshow)
+        {
+            this.ToggleSlideshow();
+        }
     }
 
     /// <summary>
@@ -104,35 +114,25 @@ public class ViewerForm : Form
     /// </summary>
     private void GetFiles()
     {
-        var extensions = new[]
+        try
         {
-            "jpeg",
-            "jpg",
-            "png"
-        };
+            var files = Directory.GetFiles(
+                _options.Path!,
+                "*",
+                SearchOption.TopDirectoryOnly);
 
-        foreach (var extension in extensions)
+            foreach (var file in files)
+            {
+                _files.Add(new FileEntry(file));
+            }
+        }
+        catch
         {
-            try
-            {
-                var files = Directory.GetFiles(
-                    _options.Path!,
-                    $"*.{extension}",
-                    SearchOption.TopDirectoryOnly);
-
-                foreach (var file in files)
-                {
-                    _files.Add(new FileEntry(file));
-                }
-            }
-            catch
-            {
-                MessageBox.Show(
-                    $"Unable to get files .{extension} from {_options.Path!}",
-                    "Error",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Error);
-            }
+            MessageBox.Show(
+                $"Unable to get files from {_options.Path!}",
+                "Error",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Error);
         }
 
         _files = _options.SortOrder switch
@@ -188,7 +188,9 @@ public class ViewerForm : Form
     {
         _errorLabel = new Label
         {
+            BackColor = Color.Black,
             Dock = DockStyle.Fill,
+            ForeColor = Color.White,
             TextAlign = ContentAlignment.MiddleCenter,
             Visible = false
         };
@@ -262,8 +264,7 @@ public class ViewerForm : Form
             case Keys.Escape:
                 if (_timer.Enabled)
                 {
-                    _timer.Stop();
-                    _timer.Enabled = false;
+                    this.ToggleSlideshow();
                 }
                 else if (this.FormBorderStyle is FormBorderStyle.None)
                 {
@@ -785,10 +786,11 @@ public class ViewerForm : Form
         if (entry.Bitmap is null)
         {
             _imageBox.Visible = false;
-
-            _errorLabel.Text = $"Error loading {entry.Filename}{Environment.NewLine}{entry.Error}";
+            
+            _errorLabel.Text = $"Error loading {entry.Filename}";
             _errorLabel.Visible = true;
 
+            this.BackColor = Color.Black;
             this.Text = $"{entry.Filename} - {Program.Name}";
 
             if (_fileIndexToClear is null ||
@@ -803,6 +805,9 @@ public class ViewerForm : Form
 
             return;
         }
+
+        _imageBox.Visible = true;
+        _errorLabel.Visible = false;
 
         // Calculate new background color.
         const int thumbSize = 100;
