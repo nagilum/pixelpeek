@@ -817,37 +817,10 @@ public class ViewerForm : Form
         _errorLabel.Visible = false;
 
         // Calculate new background color.
-        const int thumbSize = 100;
+        var thumb = (Bitmap)entry.Bitmap!.GetThumbnailImage(1, 1, null, IntPtr.Zero);
+        var pixel = thumb.GetPixel(0, 0);
 
-        var bitmap = (Bitmap)entry.Bitmap!.GetThumbnailImage(
-            thumbSize, 
-            thumbSize, 
-            null, 
-            IntPtr.Zero);
-        
-        var colors = new Dictionary<Color, int>();
-
-        for (var x = 0; x < thumbSize; x++)
-        {
-            for (var y = 0; y < thumbSize; y++)
-            {
-                var color = bitmap.GetPixel(x, y);
-
-                if (!colors.TryAdd(color, 1))
-                {
-                    colors[color]++;
-                }
-            }
-        }
-
-        var (mostUsedColor, _) = colors
-            .OrderByDescending(n => n.Value)
-            .FirstOrDefault();
-
-        this.BackColor = Color.FromArgb(
-            mostUsedColor.R,
-            mostUsedColor.G,
-            mostUsedColor.B);
+        this.BackColor = Color.FromArgb(pixel.R, pixel.G, pixel.B);
 
         // Calculate display height/width.
         var height = entry.Bitmap!.Height;
