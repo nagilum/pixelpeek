@@ -265,6 +265,10 @@ public class ViewerForm : Form
                     _timer.Stop();
                     _timer.Enabled = false;
                 }
+                else if (this.FormBorderStyle is FormBorderStyle.None)
+                {
+                    this.ToggleFullscreen();
+                }
                 else
                 {
                     this.Close();    
