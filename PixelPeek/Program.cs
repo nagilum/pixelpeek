@@ -56,13 +56,52 @@ internal static class Program
     {
         options = new Options();
 
-        foreach (var argv in args)
+        var skip = false;
+
+        for (var i = 0; i < args.Length; i++)
         {
+            if (skip)
+            {
+                skip = false;
+                continue;
+            }
+
+            var argv = args[i];
+            
             switch (argv)
             {
                 case "-f":
                 case "--fullscreen":
                     options.SetFullscreen = true;
+                    break;
+                
+                case "-i":
+                case "--interval":
+                    if (i == args.Length - 1)
+                    {
+                        MessageBox.Show(
+                            $"{argv} must be followed by a number of milliseconds.",
+                            "Error",
+                            MessageBoxButtons.OK,
+                            MessageBoxIcon.Error);
+
+                        return false;
+                    }
+
+                    if (!int.TryParse(args[i + 1], out var ms) ||
+                        ms < 0)
+                    {
+                        MessageBox.Show(
+                            $"{args[i + 1]} cannot be parsed to milliseconds.",
+                            "Error",
+                            MessageBoxButtons.OK,
+                            MessageBoxIcon.Error);
+
+                        return false;
+                    }
+
+                    options.SlideshowInterval = ms;
+                    skip = true;
                     break;
                 
                 case "-r":
@@ -92,6 +131,8 @@ internal static class Program
                             "Error",
                             MessageBoxButtons.OK,
                             MessageBoxIcon.Error);
+
+                        return false;
                     }
 
                     break;

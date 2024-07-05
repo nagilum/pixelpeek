@@ -18,7 +18,12 @@ public class Options : IOptions
     /// <inheritdoc cref="IOptions.SetFullscreen"/>
     /// </summary>
     public bool SetFullscreen { get; set; }
-    
+
+    /// <summary>
+    /// <inheritdoc cref="IOptions.SlideshowInterval"/>
+    /// </summary>
+    public int SlideshowInterval { get; set; } = 5000;
+
     /// <summary>
     /// <inheritdoc cref="IOptions.StartSlideshow"/>
     /// </summary>

@@ -222,7 +222,7 @@ public class ViewerForm : Form
         _timer = new Timer
         {
             Enabled = false,
-            Interval = (int)TimeSpan.FromSeconds(5).TotalMilliseconds
+            Interval = _options.SlideshowInterval
         };
 
         _timer.Tick += (_, _) =>

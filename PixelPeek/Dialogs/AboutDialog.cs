@@ -51,6 +51,7 @@ public class AboutDialog : Form
             Text =
                 $"Options:{Environment.NewLine}" +
                 $"    -f | --fullscreen{Environment.NewLine}" +
+                $"    -i | --interval <milliseconds>{Environment.NewLine}" +
                 $"    -r | --random{Environment.NewLine}" +
                 $"    -s | --slideshow"
         };
@@ -58,10 +59,11 @@ public class AboutDialog : Form
         var optionsDescriptionsLabel = new Label
         {
             AutoSize = true,
-            Location = new(170, 120),
+            Location = new(200, 120),
             Text =
                 $"{Environment.NewLine}" +
                 $"Start the app in full screen mode.{Environment.NewLine}" +
+                $"Interval between each slideshow image, in milliseconds. Defaults to 5000 (5 seconds).{Environment.NewLine}" +
                 $"Randomize order of files.{Environment.NewLine}" +
                 $"Start slideshow when app starts."
         };
@@ -70,7 +72,7 @@ public class AboutDialog : Form
         var copyrightLabel = new Label
         {
             AutoSize = true,
-            Location = new(13, 205),
+            Location = new(13, 255),
             Text = "Copyright \u00a9 2024 Stian Hanger"
         };
         
@@ -78,7 +80,7 @@ public class AboutDialog : Form
         {
             AutoSize = true,
             LinkArea = new(38, 36),
-            Location = new(14, 220),
+            Location = new(14, 270),
             Text = $"Source and documentation available at {Program.GitHubRepo}"
         };
 
@@ -87,7 +89,7 @@ public class AboutDialog : Form
         // User input.
         var okButton = new Button
         {
-            Location = new(500, 250),
+            Location = new(600, 250),
             Size = new(100, 40),
             Text = "Ok"
         };
@@ -116,7 +118,7 @@ public class AboutDialog : Form
     /// </summary>
     private void SetupForm()
     {
-        this.ClientSize = new Size(610, 300);
+        this.ClientSize = new Size(710, 300);
         this.FormBorderStyle = FormBorderStyle.FixedDialog;
         this.MaximizeBox = false;
         this.MinimizeBox = false;
