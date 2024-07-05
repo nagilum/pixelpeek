@@ -1,5 +1,6 @@
 ﻿using PixelPeek.Models;
 using PixelPeek.Models.Interfaces;
+using WebPLib;
 using Timer = System.Windows.Forms.Timer;
 
 namespace PixelPeek.Forms;
@@ -47,6 +48,11 @@ public class ViewerForm : Form
     /// Original image position.
     /// </summary>
     private Point? _imageOriginalPosition;
+
+    /// <summary>
+    /// WebP reader.
+    /// </summary>
+    private readonly WebP _webP = new();
 
     /// <summary>
     /// Zoom factor.
@@ -775,7 +781,9 @@ public class ViewerForm : Form
         {
             try
             {
-                entry.Bitmap = new Bitmap(entry.FullPath);
+                entry.Bitmap = entry.FullPath.EndsWith(".webp", StringComparison.OrdinalIgnoreCase)
+                    ? _webP.Load(entry.FullPath)
+                    : new Bitmap(entry.FullPath);
             }
             catch (Exception ex)
             {
@@ -806,7 +814,6 @@ public class ViewerForm : Form
             return;
         }
 
-        _imageBox.Visible = true;
         _errorLabel.Visible = false;
 
         // Calculate new background color.

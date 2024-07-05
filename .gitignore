@@ -3,5 +3,8 @@
 PixelPeek/bin/
 PixelPeek/obj/
 
+WebPLib/bin/
+WebPLib/obj/
+
 *.user
 *.log
