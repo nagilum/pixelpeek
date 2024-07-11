@@ -242,6 +242,7 @@ public class ViewerForm : Form
         var separator = path is not null ? " - " : string.Empty;
 
         this.BackColor = Color.Black;
+        this.Icon = Program.ApplicationIcon;
         this.Location = new(100, 100);
         this.Size = new(Screen.PrimaryScreen!.Bounds.Width - 200, Screen.PrimaryScreen.Bounds.Height - 200);
         this.Text = $"{path}{separator}{Program.Name}";

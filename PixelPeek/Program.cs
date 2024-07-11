@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using System.Reflection;
 using PixelPeek.Dialogs;
 using PixelPeek.Forms;
 using PixelPeek.Models;
@@ -24,6 +25,11 @@ internal static class Program
     public const string Version = "0.1-alpha";
     
     /// <summary>
+    /// Application icon.
+    /// </summary>
+    public static Icon? ApplicationIcon { get; set; }
+    
+    /// <summary>
     /// Init all the things...
     /// </summary>
     /// <param name="args">Command line arguments.</param>
@@ -31,6 +37,20 @@ internal static class Program
     private static void Main(string[] args)
     {
         ApplicationConfiguration.Initialize();
+
+        try
+        {
+            var assembly = Assembly.GetEntryAssembly();
+
+            if (assembly is not null)
+            {
+                ApplicationIcon = Icon.ExtractAssociatedIcon(assembly.Location);
+            }
+        }
+        catch
+        {
+            // Do nothing.
+        }
 
         if (args.Length is 0)
         {

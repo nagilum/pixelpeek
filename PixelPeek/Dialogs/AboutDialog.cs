@@ -81,15 +81,25 @@ public class AboutDialog : Form
             AutoSize = true,
             LinkArea = new(38, 36),
             Location = new(14, 270),
+            Tag = Program.GitHubRepo,
             Text = $"Source and documentation available at {Program.GitHubRepo}"
         };
 
-        documentationLabel.LinkClicked += DocumentationLabelLinkClicked;
+        var iconCreditLabel = new LinkLabel
+        {
+            AutoSize = true,
+            Location = new(14, 300),
+            Tag = "https://www.iconfinder.com/icons/6556720/eye_eyeball_lens_picture_view_icon",
+            Text = "Icon by Yogi Aprelliyanto"
+        };
+
+        documentationLabel.LinkClicked += LinkLabelClicked;
+        iconCreditLabel.LinkClicked += LinkLabelClicked;
         
         // User input.
         var okButton = new Button
         {
-            Location = new(600, 250),
+            Location = new(600, 280),
             Size = new(100, 40),
             Text = "Ok"
         };
@@ -109,6 +119,7 @@ public class AboutDialog : Form
 
         this.Controls.Add(copyrightLabel);
         this.Controls.Add(documentationLabel);
+        this.Controls.Add(iconCreditLabel);
         
         this.Controls.Add(okButton);
     }
@@ -118,8 +129,9 @@ public class AboutDialog : Form
     /// </summary>
     private void SetupForm()
     {
-        this.ClientSize = new Size(710, 300);
+        this.ClientSize = new Size(710, 330);
         this.FormBorderStyle = FormBorderStyle.FixedDialog;
+        this.Icon = Program.ApplicationIcon;
         this.MaximizeBox = false;
         this.MinimizeBox = false;
         this.StartPosition = FormStartPosition.CenterScreen;
@@ -131,29 +143,54 @@ public class AboutDialog : Form
     #region Event functions
 
     /// <summary>
-    /// Opens the GitHub repo URL in the users default browser.
+    /// Attempts to open the senders tag, as a URL, in the users default browser.
     /// </summary>
-    private void DocumentationLabelLinkClicked(object? sender, LinkLabelLinkClickedEventArgs e)
+    private void LinkLabelClicked(object? sender, LinkLabelLinkClickedEventArgs e)
     {
+        string? url = null;
+        
         try
         {
+            if (sender is not LinkLabel label)
+            {
+                throw new Exception("Invalid LinkLabel");
+            }
+
+            url = label.Tag?.ToString();
+
+            if (url is null)
+            {
+                throw new Exception("No URL saved in LinkLabel tag.");
+            }
+            
             var info = new ProcessStartInfo
             {
-                FileName = Program.GitHubRepo,
+                FileName = url,
                 UseShellExecute = true
             };
 
             Process.Start(info);
         }
-        catch
+        catch (Exception ex)
         {
-            Clipboard.SetText(Program.GitHubRepo);
+            if (url is null)
+            {
+                MessageBox.Show(
+                    ex.Message,
+                    "Error",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+            }
+            else
+            {
+                Clipboard.SetText(url);
             
-            MessageBox.Show(
-                $"Unable to open URL in default browser. The URL {Program.GitHubRepo} has been copied to your clipboard.",
-                "Error",
-                MessageBoxButtons.OK,
-                MessageBoxIcon.Error);
+                MessageBox.Show(
+                    $"Unable to open URL in default browser. The URL {url} has been copied to your clipboard.",
+                    "Error",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+            }
         }
     }
     
