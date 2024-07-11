@@ -820,7 +820,7 @@ public class ViewerForm : Form
         var thumb = (Bitmap)entry.Bitmap!.GetThumbnailImage(1, 1, null, IntPtr.Zero);
         var pixel = thumb.GetPixel(0, 0);
 
-        this.BackColor = Color.FromArgb(pixel.R, pixel.G, pixel.B);
+        this.BackColor = Color.FromArgb(pixel.R / 2, pixel.G / 2, pixel.B / 2);
 
         // Calculate display height/width.
         var height = entry.Bitmap!.Height;
