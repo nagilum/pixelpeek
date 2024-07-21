@@ -27,7 +27,7 @@ internal static class Program
     /// <summary>
     /// Application icon.
     /// </summary>
-    public static Icon? ApplicationIcon { get; set; }
+    public static Icon? ApplicationIcon { get; } = GetApplicationIcon();
     
     /// <summary>
     /// Init all the things...
@@ -37,20 +37,6 @@ internal static class Program
     private static void Main(string[] args)
     {
         ApplicationConfiguration.Initialize();
-
-        try
-        {
-            var assembly = Assembly.GetEntryAssembly();
-
-            if (assembly is not null)
-            {
-                ApplicationIcon = Icon.ExtractAssociatedIcon(assembly.Location);
-            }
-        }
-        catch
-        {
-            // Do nothing.
-        }
 
         if (args.Length is 0)
         {
@@ -64,6 +50,25 @@ internal static class Program
         }
         
         Application.Run(new ViewerForm(options));
+    }
+    
+    /// <summary>
+    /// Attempt to get application icon from the executable.
+    /// </summary>
+    /// <returns>Application icon.</returns>
+    private static Icon? GetApplicationIcon()
+    {
+        try
+        {
+            var assembly = Assembly.GetEntryAssembly()
+                           ?? throw new Exception("Unable to get entry assembly.");
+
+            return Icon.ExtractAssociatedIcon(assembly.Location);
+        }
+        catch
+        {
+            return null;
+        }
     }
 
     /// <summary>
