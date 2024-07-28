@@ -206,9 +206,10 @@ public class ViewerForm : Form
             Visible = false
         };
 
-        _imageBox.MouseDown += this.ImageBoxMouseDown;
-        _imageBox.MouseMove += this.ImageBoxMouseMove;
-        _imageBox.MouseUp += this.ImageBoxMouseUp;
+        _imageBox.MouseDoubleClick += this.ImageBoxMouseDoubleClickEvent;
+        _imageBox.MouseDown += this.ImageBoxMouseDownEvent;
+        _imageBox.MouseMove += this.ImageBoxMouseMoveEvent;
+        _imageBox.MouseUp += this.ImageBoxMouseUpEvent;
 
         _wrapperBox = new PictureBox
         {
@@ -250,10 +251,10 @@ public class ViewerForm : Form
 
         _lastWindowState = this.WindowState;
 
-        this.KeyDown += this.FormKeyDown;
-        this.Resize += this.FormResize;
-        this.ResizeEnd += this.FormResizeEnd;
-        this.Shown += this.FormShown;
+        this.KeyDown += this.FormKeyDownEvent;
+        this.Resize += this.FormResizeEvent;
+        this.ResizeEnd += this.FormResizeEndEvent;
+        this.Shown += this.FormShownEvent;
     }
     
     #endregion
@@ -263,7 +264,7 @@ public class ViewerForm : Form
     /// <summary>
     /// Handles the KeyDown event for all controls on the window.
     /// </summary>
-    private void FormKeyDown(object? _, KeyEventArgs e)
+    private void FormKeyDownEvent(object? _, KeyEventArgs e)
     {
         switch (e.KeyCode)
         {
@@ -329,7 +330,7 @@ public class ViewerForm : Form
     /// <summary>
     /// Reposition all controls.
     /// </summary>
-    private void FormResize(object? _, EventArgs e)
+    private void FormResizeEvent(object? _, EventArgs e)
     {
         if (this.WindowState == _lastWindowState)
         {
@@ -343,13 +344,13 @@ public class ViewerForm : Form
             return;
         }
 
-        this.FormResizeEnd(null, null!);
+        this.FormResizeEndEvent(null, null!);
     }
 
     /// <summary>
     /// Reposition all controls.
     /// </summary>
-    private void FormResizeEnd(object? _, EventArgs e)
+    private void FormResizeEndEvent(object? _, EventArgs e)
     {
         if (_fileIndex is null ||
             _zoomFactor is null ||
@@ -379,7 +380,7 @@ public class ViewerForm : Form
     /// <summary>
     /// Show the selected file.
     /// </summary>
-    private void FormShown(object? _, EventArgs e)
+    private void FormShownEvent(object? _, EventArgs e)
     {
         this.ShowFile();
     }
@@ -389,9 +390,24 @@ public class ViewerForm : Form
     #region Control event functions
 
     /// <summary>
+    /// Zoom to max.
+    /// </summary>
+    private void ImageBoxMouseDoubleClickEvent(object? _, MouseEventArgs e)
+    {
+        if (_zoomFactor is 1)
+        {
+            this.ZoomOut(true);
+        }
+        else
+        {
+            this.ZoomIn(true);
+        }
+    }
+
+    /// <summary>
     /// Readies the image box for movement.
     /// </summary>
-    private void ImageBoxMouseDown(object? _, MouseEventArgs e)
+    private void ImageBoxMouseDownEvent(object? _, MouseEventArgs e)
     {
         _imageCursorPosition = Cursor.Position;
         _imageOriginalPosition = _imageBox.Location;
@@ -401,7 +417,7 @@ public class ViewerForm : Form
     /// <summary>
     /// Move the image box.
     /// </summary>
-    private void ImageBoxMouseMove(object? _, MouseEventArgs e)
+    private void ImageBoxMouseMoveEvent(object? _, MouseEventArgs e)
     {
         if (!_imageIsMoving ||
             _imageCursorPosition is null ||
@@ -422,7 +438,7 @@ public class ViewerForm : Form
     /// <summary>
     /// Finish moving the image box.
     /// </summary>
-    private void ImageBoxMouseUp(object? _, MouseEventArgs e)
+    private void ImageBoxMouseUpEvent(object? _, MouseEventArgs e)
     {
         _imageCursorPosition = null;
         _imageOriginalPosition = null;
