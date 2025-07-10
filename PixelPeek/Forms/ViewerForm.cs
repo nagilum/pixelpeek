@@ -259,7 +259,7 @@ public class ViewerForm : Form
     
     #endregion
     
-    #region From event functions
+    #region From event handlers
 
     /// <summary>
     /// Handles the KeyDown event for all controls on the window.
@@ -387,7 +387,7 @@ public class ViewerForm : Form
     
     #endregion
     
-    #region Control event functions
+    #region Control event handlers
 
     /// <summary>
     /// Zoom to max.

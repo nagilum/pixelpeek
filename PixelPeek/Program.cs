@@ -1,6 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
-using PixelPeek.Dialogs;
 using PixelPeek.Forms;
 using PixelPeek.Models;
 using PixelPeek.Models.Interfaces;
@@ -40,7 +39,7 @@ internal static class Program
 
         if (args.Length is 0)
         {
-            Application.Run(new AboutDialog());
+            Application.Run(new StartupForm());
             return;
         }
 
