@@ -5,7 +5,7 @@ namespace PixelPeek.Forms;
 
 public class StartupForm : Form
 {
-    #region Fields and properties
+    #region Form controls
 
     /// <summary>
     /// Copy run-command button.
