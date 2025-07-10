@@ -244,8 +244,8 @@ public class ViewerForm : Form
 
         this.BackColor = Color.Black;
         this.Icon = Program.ApplicationIcon;
-        this.Location = new(100, 100);
-        this.Size = new(Screen.PrimaryScreen!.Bounds.Width - 200, Screen.PrimaryScreen.Bounds.Height - 200);
+        this.Location = new Point(100, 100);
+        this.Size = new Size(Screen.PrimaryScreen!.Bounds.Width - 200, Screen.PrimaryScreen.Bounds.Height - 200);
         this.Text = $"{path}{separator}{Program.Name}";
         this.WindowState = FormWindowState.Maximized;
 
@@ -372,8 +372,8 @@ public class ViewerForm : Form
         }
 
         _imageBox.Visible = false;
-        _imageBox.Location = new((_wrapperBox.ClientSize.Width - width) / 2, (_wrapperBox.ClientSize.Height - height) / 2);
-        _imageBox.Size = new(width, height);
+        _imageBox.Location = new Point((_wrapperBox.ClientSize.Width - width) / 2, (_wrapperBox.ClientSize.Height - height) / 2);
+        _imageBox.Size = new Size(width, height);
         _imageBox.Visible = true;
     }
     
@@ -432,7 +432,7 @@ public class ViewerForm : Form
         var newX = _imageOriginalPosition.Value.X + diffX;
         var newY = _imageOriginalPosition.Value.Y + diffY;
 
-        _imageBox.Location = new(newX, newY);
+        _imageBox.Location = new Point(newX, newY);
     }
 
     /// <summary>
@@ -535,15 +535,15 @@ public class ViewerForm : Form
         if (this.FormBorderStyle is FormBorderStyle.None)
         {
             this.FormBorderStyle = FormBorderStyle.Sizable;
-            this.WindowState = FormWindowState.Maximized;
         }
         else
         {
             this.WindowState = FormWindowState.Normal;
             this.FormBorderStyle = FormBorderStyle.None;
             this.Bounds = Screen.PrimaryScreen!.Bounds;
-            this.WindowState = FormWindowState.Maximized;
         }
+        
+        this.WindowState = FormWindowState.Maximized;
         
         if (_fileIndex is null ||
             _files[_fileIndex.Value].Bitmap is null)
@@ -581,8 +581,8 @@ public class ViewerForm : Form
 
         // Set image and position correctly.
         _imageBox.Visible = false;
-        _imageBox.Location = new((_wrapperBox.ClientSize.Width - width) / 2, (_wrapperBox.ClientSize.Height - height) / 2);
-        _imageBox.Size = new(width, height);
+        _imageBox.Location = new Point((_wrapperBox.ClientSize.Width - width) / 2, (_wrapperBox.ClientSize.Height - height) / 2);
+        _imageBox.Size = new Size(width, height);
         _imageBox.Visible = true;
         
         // Update window title.
@@ -671,8 +671,8 @@ public class ViewerForm : Form
         }
 
         _imageBox.Visible = false;
-        _imageBox.Location = new((_wrapperBox.ClientSize.Width - width) / 2, (_wrapperBox.ClientSize.Height - height) / 2);
-        _imageBox.Size = new(width, height);
+        _imageBox.Location = new Point((_wrapperBox.ClientSize.Width - width) / 2, (_wrapperBox.ClientSize.Height - height) / 2);
+        _imageBox.Size = new Size(width, height);
         _imageBox.Visible = true;
         
         var parts = new List<string>
@@ -750,8 +750,8 @@ public class ViewerForm : Form
         }
 
         _imageBox.Visible = false;
-        _imageBox.Location = new((_wrapperBox.ClientSize.Width - width) / 2, (_wrapperBox.ClientSize.Height - height) / 2);
-        _imageBox.Size = new(width, height);
+        _imageBox.Location = new Point((_wrapperBox.ClientSize.Width - width) / 2, (_wrapperBox.ClientSize.Height - height) / 2);
+        _imageBox.Size = new Size(width, height);
         _imageBox.Visible = true;
         
         var parts = new List<string>
