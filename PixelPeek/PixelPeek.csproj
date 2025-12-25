@@ -13,6 +13,10 @@
         <ProjectReference Include="..\WebPLib\WebPLib.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <PackageReference Include="Magick.NET-Q8-AnyCPU" Version="14.10.0" />
+    </ItemGroup>
+
     <Target Name="CopyLibraries" AfterTargets="AfterBuild">
         <Copy SourceFiles="Libraries/libwebp_x64.dll" DestinationFolder="$(OutDir)" />
         <Copy SourceFiles="Libraries/libwebp_x86.dll" DestinationFolder="$(OutDir)" />

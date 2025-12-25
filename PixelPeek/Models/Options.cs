@@ -1,6 +1,4 @@
-﻿using PixelPeek.Models.Interfaces;
-
-namespace PixelPeek.Models;
+﻿namespace PixelPeek.Models;
 
 public class Options : IOptions
 {

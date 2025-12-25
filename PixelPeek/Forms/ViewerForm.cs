@@ -1,6 +1,5 @@
-﻿using PixelPeek.Models;
-using PixelPeek.Models.Interfaces;
-using WebPLib;
+﻿using ImageMagick;
+using PixelPeek.Models;
 using Timer = System.Windows.Forms.Timer;
 
 namespace PixelPeek.Forms;
@@ -48,11 +47,6 @@ public class ViewerForm : Form
     /// Original image position.
     /// </summary>
     private Point? _imageOriginalPosition;
-
-    /// <summary>
-    /// WebP reader.
-    /// </summary>
-    private readonly WebP _webP = new();
 
     /// <summary>
     /// Zoom factor.
@@ -797,9 +791,19 @@ public class ViewerForm : Form
         {
             try
             {
-                entry.Bitmap = entry.FullPath.EndsWith(".webp", StringComparison.OrdinalIgnoreCase)
-                    ? _webP.Load(entry.FullPath)
-                    : new Bitmap(entry.FullPath);
+                if (entry.FullPath.EndsWith(".webp", StringComparison.OrdinalIgnoreCase))
+                {
+                    using var image = new MagickImage(entry.FullPath);
+                    image.Format = MagickFormat.Png;
+                    var bytes = image.ToByteArray();
+
+                    using var ms = new MemoryStream(bytes);
+                    entry.Bitmap = new Bitmap(ms);
+                }
+                else
+                {
+                    entry.Bitmap = new Bitmap(entry.FullPath);
+                }
             }
             catch (Exception ex)
             {

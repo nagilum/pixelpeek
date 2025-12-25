@@ -2,7 +2,6 @@ using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using PixelPeek.Forms;
 using PixelPeek.Models;
-using PixelPeek.Models.Interfaces;
 
 namespace PixelPeek;
 
