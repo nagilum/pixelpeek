@@ -1,10 +1,8 @@
+.vs
 .idea/
 
-PixelPeek/bin/
-PixelPeek/obj/
-
-WebPLib/bin/
-WebPLib/obj/
+bin/
+obj/
 
 *.user
 *.log

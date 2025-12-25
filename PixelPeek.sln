@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PixelPeek", "PixelPeek\PixelPeek.csproj", "{0F26235A-BD4E-48C4-90C2-75B0F5DB5C5D}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PixelPeek", "PixelPeek.csproj", "{0F26235A-BD4E-48C4-90C2-75B0F5DB5C5D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
