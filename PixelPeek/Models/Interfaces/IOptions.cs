@@ -13,6 +13,11 @@ public interface IOptions
     string? Path { get; set; }
     
     /// <summary>
+    /// Get files recursively.
+    /// </summary>
+    bool Recursive { get; set; }
+    
+    /// <summary>
     /// Whether to go into fullscreen when the app starts.
     /// </summary>
     bool SetFullscreen { get; set; }

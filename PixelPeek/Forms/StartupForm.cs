@@ -36,6 +36,11 @@ public class StartupForm : Form
     /// Checkbox for 'sort files randomized'.
     /// </summary>
     private CheckBox? _randomOrderCheckbox;
+    
+    /// <summary>
+    /// Checkbox for 'get files recursively'.
+    /// </summary>
+    private CheckBox? _recursiveCheckbox;
 
     /// <summary>
     /// Run button.
@@ -127,10 +132,17 @@ public class StartupForm : Form
             Text = "Start slideshow automatically"
         };
 
+        _recursiveCheckbox = new CheckBox
+        {
+            AutoSize = true,
+            Location = new Point(10, 160),
+            Text = "Get files recursively"
+        };
+
         var intervalLabel = new Label
         {
             AutoSize = true,
-            Location = new Point(10, 180),
+            Location = new Point(10, 200),
             Text = "Slideshow interval:"
         };
 
@@ -138,7 +150,7 @@ public class StartupForm : Form
         {
             AutoSize = false,
             Increment = 10,
-            Location = new Point(120, 177),
+            Location = new Point(120, 197),
             Maximum = decimal.MaxValue,
             Minimum = 1,
             Value = 5000,
@@ -148,13 +160,14 @@ public class StartupForm : Form
         var msLabel = new Label
         {
             AutoSize = true,
-            Location = new Point(200, 180),
+            Location = new Point(200, 200),
             Text = "milliseconds"
         };
 
         this.Controls.Add(_fullscreenCheckbox);
         this.Controls.Add(_randomOrderCheckbox);
         this.Controls.Add(_startSlideshowCheckbox);
+        this.Controls.Add(_recursiveCheckbox);
         
         this.Controls.Add(intervalLabel);
         this.Controls.Add(_intervalNumeric);
@@ -401,6 +414,11 @@ public class StartupForm : Form
         {
             args.Add("-s"); 
             args.Add($"-i {(int)_intervalNumeric!.Value}");
+        }
+
+        if (_recursiveCheckbox!.Checked)
+        {
+            args.Add("-e");
         }
         
         return args;

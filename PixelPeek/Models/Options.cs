@@ -13,6 +13,11 @@ public class Options : IOptions
     /// <inheritdoc cref="IOptions.Path"/>
     /// </summary>
     public string? Path { get; set; }
+    
+    /// <summary>
+    /// <inheritdoc cref="IOptions.Recursive"/>
+    /// </summary>
+    public bool Recursive { get; set; }
 
     /// <summary>
     /// <inheritdoc cref="IOptions.SetFullscreen"/>

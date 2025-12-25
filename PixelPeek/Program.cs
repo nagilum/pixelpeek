@@ -138,6 +138,11 @@ internal static class Program
                     options.StartSlideshow = true;
                     break;
                 
+                case "-e":
+                case "--recursive":
+                    options.Recursive = true;
+                    break;
+                
                 default:
                     if (Directory.Exists(argv))
                     {

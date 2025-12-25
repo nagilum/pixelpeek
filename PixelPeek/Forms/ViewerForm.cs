@@ -125,12 +125,11 @@ public class ViewerForm : Form
             var files = Directory.GetFiles(
                 _options.Path!,
                 "*",
-                SearchOption.TopDirectoryOnly);
+                _options.Recursive
+                    ? SearchOption.AllDirectories
+                    : SearchOption.TopDirectoryOnly);
 
-            foreach (var file in files)
-            {
-                _files.Add(new FileEntry(file));
-            }
+            _files.AddRange(files.Select(n => new FileEntry(n)));
         }
         catch
         {
