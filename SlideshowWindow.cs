@@ -1,7 +1,5 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Input;
@@ -13,14 +11,10 @@ using Avalonia.Media.Imaging;
 namespace PixelPeek;
 
 public class SlideshowWindow : Window
-{
-    private List<string> _files = [];
-    
+{   
     private readonly Image _image = new();
     
     private int _index = -1;
-    
-    private readonly ProgramOptions _options = new();
 
     private bool _paused;
     
@@ -28,8 +22,6 @@ public class SlideshowWindow : Window
     
     public SlideshowWindow()
     {
-        this.TryParseCmdArgs();
-        this.GetFiles();
         this.SetupWindow();
         
         this.KeyDown += this.OnWindowKeyDown;
@@ -114,42 +106,17 @@ public class SlideshowWindow : Window
         _image.Height = this.ClientSize.Height;
     }
     
-    private void GetFiles()
-    {
-        var patterns = _options.Pattern.Split(';');
-
-        foreach (var path in _options.Paths)
-        {
-            foreach (var pattern in patterns)
-            {
-                var files = Directory.GetFiles(
-                        path,
-                        pattern,
-                        _options.Recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly)
-                    .OrderBy(n => n)
-                    .ToArray();
-                
-                _files.AddRange(files);
-            }
-        }
-
-        if (_options.Shuffle)
-        {
-            _files = [.. _files.Shuffle()];
-        }
-    }
-    
     private async Task LoadNextImage()
     {
         var completed = false;
         double? step = null;
 
         if (_image.Source is not null &&
-            _options.FadeLength > 0)
+            Program.Options.FadeLength > 0)
         {
-            step = 1D / _options.FadeLength;
+            step = 1D / Program.Options.FadeLength;
 
-            for (var i = 0; i < _options.FadeLength; i++)
+            for (var i = 0; i < Program.Options.FadeLength; i++)
             {
                 _image.Opacity -= step.Value;
                 await Task.Delay(1);
@@ -160,12 +127,12 @@ public class SlideshowWindow : Window
         {
             _index++;
 
-            if (_index >= _files.Count)
+            if (_index >= Program.Files.Count)
             {
                 _index = 0;
             }
 
-            var path = _files[_index];
+            var path = Program.Files[_index];
 
             try
             {
@@ -179,11 +146,11 @@ public class SlideshowWindow : Window
                 _image.Width = this.ClientSize.Width;
                 _image.Height = this.ClientSize.Height;
 
-                if (_options.FadeLength > 0)
+                if (Program.Options.FadeLength > 0)
                 {
-                    step ??= 1D / _options.FadeLength;
+                    step ??= 1D / Program.Options.FadeLength;
                     
-                    for (var i = 0; i < _options.FadeLength; i++)
+                    for (var i = 0; i < Program.Options.FadeLength; i++)
                     {
                         _image.Opacity += step.Value;
                         await Task.Delay(1);
@@ -206,7 +173,7 @@ public class SlideshowWindow : Window
     {
         this.Background = new SolidColorBrush(Color.FromRgb(12, 16, 23));
 
-        if (_options.Fullscreen)
+        if (Program.Options.Fullscreen)
         {   
             this.WindowState = WindowState.FullScreen;
         }
@@ -224,102 +191,7 @@ public class SlideshowWindow : Window
     
     private Task StartTimer()
     {
-        _timerTask = this.OnTimerTick(TimeSpan.FromMilliseconds(_options.Interval));
+        _timerTask = this.OnTimerTick(TimeSpan.FromMilliseconds(Program.Options.Interval));
         return Task.CompletedTask;
-    }
-    
-    private void TryParseCmdArgs()
-    {
-        var args = Environment.GetCommandLineArgs().Skip(1).ToArray();
-        var skip = false;
-
-        for (var i = 0; i < args.Length; i++)
-        {
-            if (skip)
-            {
-                skip = false;
-                continue;
-            }
-            
-            var argv = args[i];
-
-            switch (argv)
-            {
-                case "-f":
-                case "--fade":
-                    if (i == args.Length - 1)
-                    {
-                        throw new Exception($"{argv} must be followed by a number of milliseconds.");
-                    }
-                    
-                    argv = args[i + 1];
-
-                    if (!int.TryParse(argv, out var fms) ||
-                        fms < 0)
-                    {
-                        throw new Exception($"{argv} cannot be parsed as an integer.");
-                    }
-                    
-                    _options.FadeLength = fms;
-                    skip = true;
-                    break;
-                
-                case "-fs":
-                case "--fullscreen":
-                    _options.Fullscreen = true;
-                    break;
-                
-                case "-i":
-                case "--interval":
-                    if (i == args.Length - 1)
-                    {
-                        throw new Exception($"{argv} must be followed by a number of milliseconds.");
-                    }
-
-                    argv = args[i + 1];
-
-                    if (!int.TryParse(argv, out var ims) ||
-                        ims < 0)
-                    {
-                        throw new Exception($"{argv} cannot be parsed as an integer.");
-                    }
-                    
-                    _options.Interval = ims;
-                    skip = true;
-                    break;
-                
-                case "-s":
-                case "--shuffle":
-                    _options.Shuffle = true;
-                    break;
-                
-                case "-r":
-                case "--recursive":
-                    _options.Recursive = true;
-                    break;
-                
-                case "-p":
-                case "--pattern":
-                    if (i == args.Length - 1)
-                    {
-                        throw new Exception($"{argv} must be followed by a file pattern.");
-                    }
-                    
-                    _options.Pattern = args[i + 1];
-                    skip = true;
-                    break;
-                
-                default:
-                    argv = args[i];
-
-                    if (!Directory.Exists(argv))
-                    {
-                        throw new Exception($"{argv} folder does not exist.");
-                    }
-                    
-                    _options.Paths.Add(argv);
-                    break;
-            }
-        }
     }
 }
