@@ -139,7 +139,7 @@ public class SlideshowWindow : Window
                 var info = new FileInfo(path);
                 var bmp = new Bitmap(info.FullName);
                 
-                this.Title = $"{info.Name} - {bmp.Size.Width}x{bmp.Size.Height}";
+                this.Title = $"{info.Name} - {bmp.Size.Width}x{bmp.Size.Height} - PixelPeek v{Program.Version}";
 
                 _image.Source = bmp;
                 _image.Stretch = Stretch.Uniform;

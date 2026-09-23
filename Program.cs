@@ -8,6 +8,8 @@ namespace PixelPeek;
 
 public static class Program
 {
+    public const string Version = "0.2-beta";
+    
     public static readonly ProgramOptions Options = new();
     
     public static List<string> Files = [];
@@ -18,6 +20,13 @@ public static class Program
         try
         {
             TryParseCmdArgs(args);
+
+            if (Options.ShowHelp)
+            {
+                ShowProgramUsage();
+                return;
+            }
+            
             GetFiles();
         }
         catch (Exception ex)
@@ -67,9 +76,39 @@ public static class Program
             Files = [.. Files.Shuffle()];
         }
     }
+
+    private static void ShowProgramUsage()
+        => Console.WriteLine(
+            $"""
+            PixelPeek v{Version}
+            Simple image slideshow
+            
+            Usage:
+              PixelPeek [path-to-images] [<options>]
+              
+            You can specify multiple paths.
+            
+            Options:
+              -f, --fade  <ms>        Duration of fade in milliseconds. Will be doubled for fade-out and fade-in.
+              -fs, --fullscreen       Run the slideshow in fullscreen.
+              -i, --interval  <ms>    Milliseconds between each image change. Defaults to 5000.
+              -s, --shuffle           Shuffle images.
+              -r, --recursive         Load images recursively from given paths.
+              -p, --pattern  <ptn>    Set pattern of files to look for. Can be repeated. Defaults to *
+            
+            Source and documentation available at https://github.com/nagilum/pixelpeek
+            
+            """);
     
     private static void TryParseCmdArgs(string[] args)
     {
+        if (args.Length is 0 ||
+            args.Any(n => n is "-h" or "--help"))
+        {
+            Options.ShowHelp = true;
+            return;
+        }
+        
         var skip = false;
 
         for (var i = 0; i < args.Length; i++)
