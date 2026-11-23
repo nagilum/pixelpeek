@@ -19,15 +19,15 @@ public static class Program
     {
         try
         {
-            TryParseCmdArgs(args);
+            TryParseCmdArgs(args, Options);
 
             if (Options.ShowHelp)
             {
                 ShowProgramUsage();
                 return;
             }
-            
-            GetFiles();
+
+            Files = GetFiles(Options);
         }
         catch (Exception ex)
         {
@@ -47,37 +47,41 @@ public static class Program
         app.StartWithClassicDesktopLifetime([]);
     }
     
-    private static void GetFiles()
+    internal static List<string> GetFiles(ProgramOptions options)
     {
-        if (Options.Patterns.Count is 0)
+        if (options.Patterns.Count is 0)
         {
-            Options.Patterns.Add("*");
+            options.Patterns.Add("*");
         }
 
-        foreach (var path in Options.Paths)
+        var result = new List<string>();
+
+        foreach (var path in options.Paths)
         {
-            foreach (var pattern in Options.Patterns)
+            foreach (var pattern in options.Patterns)
             {
                 var files = Directory.GetFiles(
                         path,
                         pattern,
-                        Options.Recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly)
+                        options.Recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly)
                     .OrderBy(n => n, StringComparer.OrdinalIgnoreCase)
                     .ToArray();
-                
-                Files.AddRange(files);
+
+                result.AddRange(files);
             }
         }
 
-        if (Files.Count is 0)
+        if (result.Count is 0)
         {
             throw new Exception("No files found in the specified paths.");
         }
 
-        if (Options.Shuffle)
+        if (options.Shuffle)
         {
-            Files = [.. Files.Shuffle()];
+            result = [.. result.Shuffle()];
         }
+
+        return result;
     }
 
     private static void ShowProgramUsage()
@@ -103,12 +107,12 @@ public static class Program
             
             """);
     
-    private static void TryParseCmdArgs(string[] args)
+    internal static void TryParseCmdArgs(string[] args, ProgramOptions options)
     {
         if (args.Length is 0 ||
             args.Any(n => n is "-h" or "--help"))
         {
-            Options.ShowHelp = true;
+            options.ShowHelp = true;
             return;
         }
         
@@ -138,16 +142,16 @@ public static class Program
                     if (!int.TryParse(argv, out var fms) ||
                         fms < 0)
                     {
-                        throw new Exception($"{argv} cannot be parsed as an integer.");
+                        throw new Exception($"{argv} cannot be parsed as a positive integer.");
                     }
                     
-                    Options.FadeLength = fms;
+                    options.FadeLength = fms;
                     skip = true;
                     break;
                 
                 case "-fs":
                 case "--fullscreen":
-                    Options.Fullscreen = true;
+                    options.Fullscreen = true;
                     break;
                 
                 case "-i":
@@ -162,21 +166,21 @@ public static class Program
                     if (!int.TryParse(argv, out var ims) ||
                         ims < 0)
                     {
-                        throw new Exception($"{argv} cannot be parsed as an integer.");
+                        throw new Exception($"{argv} cannot be parsed as a positive integer.");
                     }
                     
-                    Options.Interval = ims;
+                    options.Interval = ims;
                     skip = true;
                     break;
                 
                 case "-s":
                 case "--shuffle":
-                    Options.Shuffle = true;
+                    options.Shuffle = true;
                     break;
                 
                 case "-r":
                 case "--recursive":
-                    Options.Recursive = true;
+                    options.Recursive = true;
                     break;
                 
                 case "-p":
@@ -188,9 +192,9 @@ public static class Program
                     
                     argv = args[i + 1];
                     
-                    if (!Options.Patterns.Contains(argv))
+                    if (!options.Patterns.Contains(argv))
                     {
-                        Options.Patterns.Add(argv);
+                        options.Patterns.Add(argv);
                     }
                     
                     skip = true;
@@ -204,12 +208,12 @@ public static class Program
                         throw new Exception($"{argv} folder does not exist.");
                     }
                     
-                    Options.Paths.Add(argv);
+                    options.Paths.Add(argv);
                     break;
             }
         }
         
-        if (Options.Paths.Count is 0)
+        if (options.Paths.Count is 0)
         {
             throw new Exception("You must specify at least one path.");
         }

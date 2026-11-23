@@ -3,6 +3,8 @@
 
 PixelPeekApp/bin/
 PixelPeekApp/obj/
+PixelPeekTests/bin/
+PixelPeekTests/obj/
 
 *.user
 *.log
