@@ -1,8 +1,8 @@
 .vs
 .idea/
 
-bin/
-obj/
+PixelPeekApp/bin/
+PixelPeekApp/obj/
 
 *.user
 *.log
