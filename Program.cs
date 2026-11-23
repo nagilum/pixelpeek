@@ -11,9 +11,9 @@ public static class Program
     public const string Version = "0.2-beta";
     
     public static readonly ProgramOptions Options = new();
-    
-    public static List<string> Files = [];
-    
+
+    public static List<string> Files { get; private set; } = [];
+
     [STAThread]
     public static void Main(string[] args)
     {
@@ -49,17 +49,20 @@ public static class Program
     
     private static void GetFiles()
     {
-        var patterns = Options.Pattern.Split(';');
+        if (Options.Patterns.Count is 0)
+        {
+            Options.Patterns.Add("*");
+        }
 
         foreach (var path in Options.Paths)
         {
-            foreach (var pattern in patterns)
+            foreach (var pattern in Options.Patterns)
             {
                 var files = Directory.GetFiles(
                         path,
                         pattern,
                         Options.Recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly)
-                    .OrderBy(n => n)
+                    .OrderBy(n => n, StringComparer.OrdinalIgnoreCase)
                     .ToArray();
                 
                 Files.AddRange(files);
@@ -183,7 +186,13 @@ public static class Program
                         throw new Exception($"{argv} must be followed by a file pattern.");
                     }
                     
-                    Options.Pattern = args[i + 1];
+                    argv = args[i + 1];
+                    
+                    if (!Options.Patterns.Contains(argv))
+                    {
+                        Options.Patterns.Add(argv);
+                    }
+                    
                     skip = true;
                     break;
                 

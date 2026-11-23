@@ -12,7 +12,7 @@ public record ProgramOptions
 
     public List<string> Paths { get; } = [];
 
-    public string Pattern { get; set; } = "*";
+    public List<string> Patterns { get; } = [];
     
     public bool Recursive { get; set; }
     
