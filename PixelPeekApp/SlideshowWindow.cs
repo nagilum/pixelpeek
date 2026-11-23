@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
 using Avalonia;
@@ -23,6 +24,8 @@ public class SlideshowWindow : Window
     private Task? _timerTask;
 
     private static readonly Cursor HiddenCursor = new(StandardCursorType.None);
+
+    private static readonly TimeSpan FadeFrameInterval = TimeSpan.FromMilliseconds(16);
 
     private readonly DispatcherTimer _cursorTimer = new() { Interval = TimeSpan.FromSeconds(2) };
 
@@ -70,7 +73,11 @@ public class SlideshowWindow : Window
                     await Task.Delay(1);
                 }
                 
-                await this.LoadNextImage();
+                if (!await this.LoadNextImage())
+                {
+                    return;
+                }
+
                 await Task.Delay(span);
             }
         }
@@ -130,8 +137,10 @@ public class SlideshowWindow : Window
     {
         try
         {
-            await this.StartTimer();
-            await this.LoadNextImage();
+            if (await this.LoadNextImage())
+            {
+                await this.StartTimer();
+            }
         }
         catch (Exception ex)
         {
@@ -146,67 +155,85 @@ public class SlideshowWindow : Window
         _image.Height = this.ClientSize.Height;
     }
     
-    private async Task LoadNextImage()
+    /// <summary>
+    /// Fades out the current image and fades in the next file that can be loaded.
+    /// </summary>
+    /// <returns>False if none of the files could be loaded, in which case the window is closed.</returns>
+    private async Task<bool> LoadNextImage()
     {
-        var completed = false;
-        double? step = null;
-
-        if (_image.Source is not null &&
-            Program.Options.FadeLength > 0)
+        if (_image.Source is not null)
         {
-            step = 1D / Program.Options.FadeLength;
-
-            for (var i = 0; i < Program.Options.FadeLength; i++)
-            {
-                _image.Opacity -= step.Value;
-                await Task.Delay(1);
-            }
+            await this.FadeTo(0);
         }
 
-        while (!completed)
+        while (Program.Files.Count > 0)
         {
-            _index++;
-
-            if (_index >= Program.Files.Count)
-            {
-                _index = 0;
-            }
+            _index = (_index + 1) % Program.Files.Count;
 
             var path = Program.Files[_index];
+            FileInfo info;
+            Bitmap bmp;
 
             try
             {
-                var info = new FileInfo(path);
-                var bmp = new Bitmap(info.FullName);
-                
-                this.Title = $"{info.Name} - {bmp.Size.Width}x{bmp.Size.Height} - PixelPeek v{Program.Version}";
-
-                _image.Source = bmp;
-                _image.Stretch = Stretch.Uniform;
-                _image.Width = this.ClientSize.Width;
-                _image.Height = this.ClientSize.Height;
-
-                if (Program.Options.FadeLength > 0)
-                {
-                    step ??= 1D / Program.Options.FadeLength;
-                    
-                    for (var i = 0; i < Program.Options.FadeLength; i++)
-                    {
-                        _image.Opacity += step.Value;
-                        await Task.Delay(1);
-                    }
-
-                    _image.Opacity = 1;
-                }
-
-                completed = true;
+                info = new FileInfo(path);
+                bmp = new Bitmap(info.FullName);
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"[{ex.GetType().Name}] {ex.Message}");
                 Console.WriteLine($"Path: {path}");
+
+                // Drop the file so it isn't retried on every pass, and step back so the file
+                // that moves into its slot isn't skipped. If every file fails, the list ends up
+                // empty and the loop exits instead of spinning forever.
+                Program.Files.RemoveAt(_index);
+                _index--;
+                continue;
             }
+
+            this.Title = $"{info.Name} - {bmp.Size.Width}x{bmp.Size.Height} - PixelPeek v{Program.Version}";
+
+            _image.Source = bmp;
+            _image.Stretch = Stretch.Uniform;
+            _image.Width = this.ClientSize.Width;
+            _image.Height = this.ClientSize.Height;
+
+            await this.FadeTo(1);
+            return true;
         }
+
+        Console.WriteLine("None of the files could be loaded as images.");
+        this.Close();
+        return false;
+    }
+
+    /// <summary>
+    /// Animates the image opacity to the given value over the configured fade length.
+    /// </summary>
+    private async Task FadeTo(double target)
+    {
+        var duration = TimeSpan.FromMilliseconds(Program.Options.FadeLength);
+        var start = _image.Opacity;
+
+        if (duration <= TimeSpan.Zero ||
+            Math.Abs(start - target) < 0)
+        {
+            _image.Opacity = target;
+            return;
+        }
+
+        // Base each step on the time actually elapsed instead of counting delays, since
+        // Task.Delay can't wait less than the OS timer resolution (about 15 ms on Windows).
+        var stopwatch = Stopwatch.StartNew();
+
+        while (stopwatch.Elapsed < duration)
+        {
+            _image.Opacity = start + (target - start) * (stopwatch.Elapsed / duration);
+            await Task.Delay(FadeFrameInterval);
+        }
+
+        _image.Opacity = target;
     }
     
     private void SetupWindow()
