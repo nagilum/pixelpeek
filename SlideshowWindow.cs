@@ -1,12 +1,14 @@
 using System;
 using System.IO;
 using System.Threading.Tasks;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
+using Avalonia.Threading;
 
 namespace PixelPeek;
 
@@ -19,6 +21,12 @@ public class SlideshowWindow : Window
     private bool _paused;
     
     private Task? _timerTask;
+
+    private static readonly Cursor HiddenCursor = new(StandardCursorType.None);
+
+    private readonly DispatcherTimer _cursorTimer = new() { Interval = TimeSpan.FromSeconds(2) };
+
+    private Point? _lastPointerPosition;
     
     public SlideshowWindow()
     {
@@ -27,11 +35,17 @@ public class SlideshowWindow : Window
         this.KeyDown += this.OnWindowKeyDown;
         this.Loaded += this.OnWindowLoaded;
         this.Resized += this.OnWindowResized;
+        this.PointerMoved += this.OnWindowPointerMoved;
+
+        _cursorTimer.Tick += this.OnCursorTimerTick;
+        _cursorTimer.Start();
     }
     
     protected override void OnClosing(WindowClosingEventArgs e)
     {
         base.OnClosing(e);
+
+        _cursorTimer.Stop();
 
         try
         {
@@ -66,6 +80,31 @@ public class SlideshowWindow : Window
         }
     }
     
+    private void OnCursorTimerTick(object? _, EventArgs e)
+    {
+        _cursorTimer.Stop();
+        this.Cursor = HiddenCursor;
+    }
+
+    private void OnWindowPointerMoved(object? _, PointerEventArgs e)
+    {
+        var position = e.GetPosition(this);
+
+        // Some platforms raise PointerMoved without actual movement (e.g. when
+        // the cursor changes), so only react to real position changes.
+        if (position == _lastPointerPosition)
+        {
+            return;
+        }
+
+        _lastPointerPosition = position;
+        this.Cursor = Cursor.Default;
+
+        // Restart the inactivity countdown.
+        _cursorTimer.Stop();
+        _cursorTimer.Start();
+    }
+    
     private void OnWindowKeyDown(object? _, KeyEventArgs e)
     {
         switch (e.Key)
@@ -78,6 +117,7 @@ public class SlideshowWindow : Window
                 this.WindowState = this.WindowState is WindowState.FullScreen
                     ? WindowState.Normal
                     : WindowState.FullScreen;
+                
                 break;
             
             case Key.P or Key.Space:
@@ -174,7 +214,7 @@ public class SlideshowWindow : Window
         this.Background = new SolidColorBrush(Color.FromRgb(12, 16, 23));
 
         if (Program.Options.Fullscreen)
-        {   
+        {
             this.WindowState = WindowState.FullScreen;
         }
 
