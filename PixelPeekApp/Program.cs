@@ -164,7 +164,7 @@ public static class Program
                     argv = args[i + 1];
 
                     if (!int.TryParse(argv, out var ims) ||
-                        ims < 0)
+                        ims < 1)
                     {
                         throw new Exception($"{argv} cannot be parsed as a positive integer.");
                     }

@@ -194,7 +194,12 @@ public class SlideshowWindow : Window
 
             this.Title = $"{info.Name} - {bmp.Size.Width}x{bmp.Size.Height} - PixelPeek v{Program.Version}";
 
+            // Free the previous bitmap right away. Its pixel data lives in native memory the GC
+            // doesn't track, so without this, memory grows by tens of MB per large photo shown.
+            var previous = _image.Source as IDisposable;
             _image.Source = bmp;
+            previous?.Dispose();
+
             _image.Stretch = Stretch.Uniform;
             _image.Width = this.ClientSize.Width;
             _image.Height = this.ClientSize.Height;
@@ -217,7 +222,7 @@ public class SlideshowWindow : Window
         var start = _image.Opacity;
 
         if (duration <= TimeSpan.Zero ||
-            Math.Abs(start - target) < 0)
+            Math.Abs(start - target) < 0.001)
         {
             _image.Opacity = target;
             return;

@@ -97,12 +97,23 @@ public sealed class CommandLineParsingTests : IDisposable
     [Theory]
     [InlineData("-i", 2500)]
     [InlineData("--interval", 10000)]
-    [InlineData("-i", 0)]
+    [InlineData("-i", 1)]
     public void IntervalFlag_SetsInterval(string flag, int milliseconds)
     {
         var options = Parse(_dir.FullName, flag, milliseconds.ToString());
 
         Assert.Equal(milliseconds, options.Interval);
+    }
+
+    [Theory]
+    [InlineData("-i")]
+    [InlineData("--interval")]
+    public void IntervalFlag_WithZero_Throws(string flag)
+    {
+        // With no wait between images, the slideshow loop would never yield and freeze the window.
+        var ex = ParseFails(_dir.FullName, flag, "0");
+
+        Assert.Equal("0 cannot be parsed as a positive integer.", ex.Message);
     }
 
     [Theory]

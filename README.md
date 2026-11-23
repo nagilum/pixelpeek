@@ -61,7 +61,7 @@ You can give several paths, and they're shown in the order you list them. Runnin
 
 | Option | Description | Default |
 | --- | --- | --- |
-| `-i`, `--interval <ms>` | Milliseconds between image changes. | `5000` |
+| `-i`, `--interval <ms>` | Milliseconds between image changes. Must be at least 1. | `5000` |
 | `-f`, `--fade <ms>` | Fade duration in milliseconds. Used for both the fade-out and the fade-in, so a full transition takes twice as long. | `0` (no fade) |
 | `-s`, `--shuffle` | Show the images in random order. | Off |
 | `-r`, `--recursive` | Include images in subfolders. | Off |
